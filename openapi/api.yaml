@@ -1,0 +1,344 @@
+openapi: 3.0.3
+info: 
+  title: Bitcoin Information Hub - OpenAPI 3.0
+  description: |-
+    [TODO] add the description
+  version: 1.0.0
+
+servers: 
+  - url: http://127.0.0.1:8080/api/v1
+
+paths:
+  /info:
+    parameters:
+    - in: query
+      name: date
+      schema:
+        $ref: '#/components/schemas/Date'
+      description: Start date
+      examples:
+        test:
+          summary: Example Date
+          value: '2022-11-10'
+    - in: query
+      name: offset
+      schema:
+        type: number
+        minimum: 0
+        default: 0
+      description: Offset in unit of days
+    get:
+      summary: Returns all basic information in format of time points
+      operationId: controller.get_info
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Info'
+                  
+  /info/{feature}:
+    parameters:
+    - in: path
+      name: feature
+      required: true
+      schema:
+        type: string
+      examples:
+        price:
+          summary: Price
+          value: 'price'
+        twitterCount:
+          summary: Twitter Count
+          value: 'count'
+    # query params
+    - in: query
+      name: date
+      schema:
+        $ref: '#/components/schemas/Date'
+      description: Start date
+      examples:
+        test:
+          summary: Example Date
+          value: '2022-11-10'
+    - in: query
+      name: offset
+      schema:
+        type: number
+        minimum: 0
+        default: 0
+      description: Offset in unit of days
+    get:
+      summary: Returns a basic information in format of time points
+      operationId: controller.get_info_feat
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Info'
+  
+    
+  /stat:
+    parameters:
+    # query params
+    - in: query
+      name: date
+      schema:
+        $ref: '#/components/schemas/Date'
+      description: Start date
+      examples:
+        test:
+          summary: Example Date
+          value: '2022-11-10'
+    - in: query
+      name: offset
+      schema:
+        type: number
+        minimum: 0
+        default: 0
+      description: Offset in unit of days
+    get:
+      summary: Returns statistics information of all features
+      operationId: controller.get_stat
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BasicStats'
+  /stat/{feature}:
+    parameters:
+    - in: path
+      name: feature
+      required: true
+      schema:
+        type: string
+      examples:
+        price:
+          summary: Price
+          value: 'price'
+        twitterCount:
+          summary: Twitter Count
+          value: 'count'
+    # query params
+    - in: query
+      name: date
+      schema:
+        $ref: '#/components/schemas/Date'
+      description: Start date
+      examples:
+        test:
+          summary: Example Date
+          value: '2022-11-10'
+    - in: query
+      name: offset
+      schema:
+        type: number
+        minimum: 0
+        default: 0
+      description: Offset in unit of days
+    get:
+      summary: Returns statistics information of a specified feature
+      operationId: controller.get_stat_feat
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicStats'
+  /stat/corr:
+    parameters:
+    # query params
+    - in: query
+      name: date
+      schema:
+        $ref: '#/components/schemas/Date'
+      description: Start date
+      examples:
+        test:
+          summary: Example Date
+          value: '2022-11-10'
+    - in: query
+      name: offset
+      schema:
+        type: number
+        minimum: 0
+        default: 0
+      description: Offset in unit of days
+    get:
+      summary: Returns correlation coefficient of all features pairs
+      operationId: controller.get_corr
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorrStat'
+                
+  /stat/corr/{feature}:
+    parameters:
+    - in: path
+      name: feature
+      required: true
+      schema:
+        type: string
+      examples:
+        price:
+          summary: Price
+          value: 'price'
+        twitterCount:
+          summary: Twitter Count
+          value: 'count'
+    # query params
+    - in: query
+      name: date
+      schema:
+        $ref: '#/components/schemas/Date'
+      description: Start date
+      examples:
+        test:
+          summary: Example Date
+          value: '2022-11-10'
+    - in: query
+      name: offset
+      schema:
+        type: number
+        minimum: 0
+        default: 0
+      description: Offset in unit of days
+    get:
+      summary: Returns correlation coefficient of features compared with specified features
+      operationId: controller.get_corr_feat
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CorrStat'
+  /stat/corr/{feature}/{feature2}:
+    parameters:
+    - in: path
+      name: feature
+      required: true
+      schema:
+        type: string
+      examples:
+        price:
+          summary: Price
+          value: 'price'
+        twitterCount:
+          summary: Twitter Count
+          value: 'count'
+    - in: path
+      name: feature2
+      required: true
+      schema:
+        type: string
+      examples:
+        price:
+          summary: Price
+          value: 'price'
+        twitterCount:
+          summary: Twitter Count
+          value: 'count'
+    # query params
+    - in: query
+      name: date
+      schema:
+        $ref: '#/components/schemas/Date'
+      description: Start date
+      examples:
+        test:
+          summary: Example Date
+          value: '2022-11-10'
+    - in: query
+      name: offset
+      schema:
+        type: number
+        minimum: 0
+        default: 0
+      description: Offset in unit of days
+    get:
+      summary: Returns correlation coefficient of features compared with specified features
+      operationId: controller.get_corr_feat_feat2
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorrStat'
+      
+components:
+  schemas:
+    # info schemas
+    InfoItem:
+      type: object
+      properties:
+        name:
+          type: string
+        vals:
+          type: array
+          items:
+            type: number
+            
+    Info:
+      type: object
+      properties:
+        datetime:
+          type: array
+          items:
+            $ref: '#/components/schemas/DateTime'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfoItem'
+          
+    # stat schemas
+    BasicStats:
+      type: object
+      properties:
+        name:
+          type: string
+        avg:
+          type: number
+        std:
+          type: number
+        count:
+          type: number
+          
+    CorrStat:
+      type: object
+      properties:
+        x:
+          type: string
+        y:
+          type: string
+        corr:
+          type: number
+          maximum: 1
+          minimum: -1
+          
+    Date:
+      type: string
+      pattern: '^\d{4}-\d{2}-\d{2}$'
+      
+    DateTime:
+      type: string
+      pattern: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$'
+          
