@@ -37,6 +37,7 @@ def generate_table(date=None, offset=None):
 
 def get_info(date=None, offset=None):
     df = generate_table(date=date, offset=offset)
+    df = df.replace([np.nan], [None])
     features = df.drop(columns=["time"]).columns
     data = []
     for f in features:
@@ -48,7 +49,10 @@ def get_info(date=None, offset=None):
         )
     return models.Info(
         _datetime=df["time"].to_list(),
-        data=data
+        data=list([models.InfoItem(
+            name=f,
+            vals=df[f].to_list()
+        ) for f in features])
     )
 
 def get_info_feat(feature, date=None, offset=None):

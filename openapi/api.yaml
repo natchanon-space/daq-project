@@ -36,9 +36,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Info'
+                $ref: '#/components/schemas/Info'
                   
   /info/{feature}:
     parameters:
@@ -80,9 +78,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Info'
+                $ref: '#/components/schemas/Info'
   
     
   /stat:
@@ -340,5 +336,5 @@ components:
       
     DateTime:
       type: string
-      pattern: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$'
+      pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$'
           
