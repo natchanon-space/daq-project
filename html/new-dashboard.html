@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Bitcoin Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-2.16.1.min.js"></script>
+</head>
+
+<body>
+    <h1>Bitcoin Dashboard</h1>
+    <div id="form-box">
+        <div>
+            <label for="date">start date:</label>
+            <input type="date" id="date" value="2022-11-10"/>
+            <br />
+            <label for="offset">offset:</label>
+            <input type="number" id="offset" value="0" />
+            <br />
+            <label for="h-type-1">x:</label>
+            <select id="h-type-1" name="type">
+                <option value="price">price</option>
+                <option value="count">tweet</option>
+                <option value="deposit">deposit</option>
+                <option value="withdraw">withdraw</option>
+                <option value="lend">lend</option>
+                <option value="borrow">borrow</option>
+            </select>
+            <label for="h-type-1">y:</label>
+            <select id="h-type-2" name="type">
+                <option value="price">price</option>
+                <option value="count">tweet</option>
+                <option value="deposit">deposit</option>
+                <option value="withdraw">withdraw</option>
+                <option value="lend">lend</option>
+                <option value="borrow">borrow</option>
+            </select>
+            <br />
+            <button onClick={formEnter()}>Enter</button>
+        </div>
+    </div>
+
+    <h2 id="title"></h2>
+    <div id="desc"></div>
+    <div id="hist"></div>
+    <div id="line"></div>
+    <div id="scat"></div>
+</body>
+
+<script>
+    function formEnter() {
+        var feat1 = document.getElementById('h-type-1').value;
+        var feat2 = document.getElementById('h-type-2').value;
+        var date = document.getElementById('date').value;
+        var offset = document.getElementById('offset').value;
+
+        document.getElementById('title').innerHTML = `Summarized Data Over ${parseInt(offset)+1} (Start From ${date})`
+
+        createTable(feat1, feat2, date, offset)
+        createHistogramChart(feat1, feat2, date, offset);
+        createLineChart(feat1, feat2, date, offset);
+        createScatterChart(feat1, feat2, date, offset);
+
+        // DEBUG
+        console.log(feat1, feat2, date, offset);
+    }
+
+    async function createTable(type1,type2,date,offset) {
+        var resp = await fetch('http://localhost:3000/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+          {
+  feat1: basicStats(feature: "${type1}", date: "${date}", offset: ${offset}) {
+    avg
+    count
+    name
+    std
+  }
+  feat2: basicStats(feature: "${type2}", date: "${date}", offset: ${offset}) {
+    avg
+    count
+    name
+    std
+  }
+  corr: controllerGetCorrFeatFeat2(date: "${date}", offset: ${offset}, feature: "${type1}", feature2: "${type2}") {
+    corr
+    x
+    y
+  }
+}`
+        })
+      });
+      var json = await resp.json();
+      var table = json.data;
+      var feat1 = table.feat1;
+      var feat2 = table.feat2;
+
+        var values = [
+            ['avg', 'std', 'count', 'corr coef'],
+            [feat1.avg, feat1.std, feat1.count, table.corr.corr],
+            [feat2.avg, feat2.std, feat2.count],
+        ]
+
+        var data = [{
+        type: 'table',
+        header: {
+            values: [["<b>name</b>"], [`<b>${type1 == "count" ? "tweet" : type1}</b>`],
+                        [`<b>${type2 == "count" ? "tweet" : type2}</b>`]],
+            align: "center",
+            line: {width: 1, color: 'black'},
+            fill: {color: "grey"},
+            font: {family: "Arial", size: 12, color: "white"}
+        },
+        cells: {
+            values: values,
+            align: "center",
+            line: {color: "black", width: 1},
+            font: {family: "Arial", size: 11, color: ["black"]}
+        }
+        }]
+
+        Plotly.newPlot('desc', data);
+    }
+
+    async function createHistogramChart(type1,type2, date, offset) {
+      var resp = await fetch('http://localhost:3000/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            {
+                stat(offset: ${offset},date: "${date}" ){
+                    avg
+                    count
+                    name
+                    std
+                }
+            }`
+        })
+      });
+      var json = await resp.json();
+      var table = json.data;
+
+      x = []
+      y= []
+
+      table.stat.forEach(element => {
+        if (element.name == type1 || element.name == type2){
+            x.push(element.name =='count' ? 'tweets' : element.name)
+            y.push(element.avg)
+        }
+      });
+    data1 = [{x:x, y:y , type:'bar',  
+        marker:{
+            color: ['cyan', 'rgba(222,45,38,0.8)']
+            },}]
+
+    console.log(data1)
+
+
+      var layout1 = {
+        title: `Average ${type1 =='count' ? 'tweet' : type1} / ${type2 =='count' ? 'tweet' : type2} `,
+        yaxis: {
+          title: type1 == 'count' || type2 == 'count' ?  'Amount (usd/tweets)' : 'Amount (usd)' ,
+        }
+      };
+      var config = { responsive: true };
+
+      Plotly.newPlot('hist', data1,layout1,config);
+    }
+
+    async function createLineChart(type1,type2,date,offset) {
+      var resp = await fetch('http://localhost:3000/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+          {
+            info(date: "${date}", offset: ${offset}){
+                data {
+                    name
+                    vals
+                    }
+                datetime
+            }
+        }`
+        })
+      });
+      var json = await resp.json();
+      var table = json.data;
+
+      var data2 = []
+      table.info.data.forEach(element => {
+        if (element.name == type1 ||element.name == type2  ){
+            data2.push({
+              x: table.info.datetime,
+          y: element.vals,
+          name: element.name  == 'count' ? 'tweet' : element.name  ,
+          type: 'scatter',
+          yaxis:  element.name  == type2 ? 'y2' : 'y1'  ,
+        })
+        }
+      
+      });
+
+      console.log(data2)
+
+      var layout = {
+        title: 
+        `Bitcoin's ${type1 == 'count' ? 'tweets' : type1 } compare with Bitcoin's ${type2 == 'count' ? 'tweets' : type2 }`,
+        xaxis: {
+          title: 'Days'
+        },
+        yaxis: {
+          title: `${type1 == 'count' ? 'tweets' : type1 }/ ${type2 == 'count' ? 'tweets' : type2 }`,
+        },
+        yaxis2: {
+          // title: `${type2 == 'count' ? "price (usd)" : "twitter (tweets)"} `,
+          titlefont: {color: 'rgb(148, 103, 189)'},
+          tickfont: {color: 'rgb(148, 103, 189)'},
+          overlaying: 'y',
+          side: 'right'
+        }
+      };
+      var config = { responsive: true };
+      Plotly.newPlot("line", data2, layout, config);
+    }
+
+    async function createScatterChart(type1,type2,date,offset) {
+      var resp = await fetch('http://localhost:3000/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            {
+                info(date: "${date}", offset:${offset}){
+                    data {
+                    name
+                    vals
+                    }
+                    datetime
+                }
+            }`
+        })
+      });
+      var json = await resp.json();
+      var table = json.data;
+
+      
+      var data2 = []
+      var x = null
+      var y = null
+      table.info.data.forEach(element => {
+        if (element.name == type1) {
+          x = element.vals
+        } 
+        if (element.name == type2) {
+          y = element.vals
+        }
+      });
+
+      data2.push({
+        x: x,
+        y: y,
+        mode: 'markers+text',
+        name: 'withdraw',
+        type: 'scatter',
+        // yaxis: 'withdraw'
+      })
+
+      console.log(data2)
+
+      var layout = {
+        title: `Scatter ${type1 =='count' ? 'tweet' : type1} / ${type2 =='count' ? 'tweet' : type2} `,
+        xaxis: {
+          title: `${type2 =='count' ? 'tweet' : type1}`
+        },
+        yaxis: {
+          title: `${type1 =='count' ? 'tweet' : type2}`
+        },
+        // yaxis2: {
+        //   title: 'price (usd)',
+        //   titlefont: {color: 'rgb(148, 103, 189)'},
+        //   tickfont: {color: 'rgb(148, 103, 189)'},
+        //   overlaying: 'y',
+        //   side: 'right'
+        // }
+      };
+      var config = { responsive: true };
+      Plotly.newPlot("scat", data2, layout, config);
+    }
+</script>
+
+</html>
