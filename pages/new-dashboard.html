@@ -265,9 +265,10 @@
       var y = null
       table.info.data.forEach(element => {
         if (element.name == type1) {
-          y = element.vals
-        } else if (element.name == type2) {
           x = element.vals
+        } 
+        if (element.name == type2) {
+          y = element.vals
         }
       });
 
@@ -285,10 +286,10 @@
       var layout = {
         title: `Scatter ${type1 =='count' ? 'tweet' : type1} / ${type2 =='count' ? 'tweet' : type2} `,
         xaxis: {
-          title: `${type2 =='count' ? 'tweet' : type2}`
+          title: `${type2 =='count' ? 'tweet' : type1}`
         },
         yaxis: {
-          title: `${type1 =='count' ? 'tweet' : type1}`
+          title: `${type1 =='count' ? 'tweet' : type2}`
         },
         // yaxis2: {
         //   title: 'price (usd)',
