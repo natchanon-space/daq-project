@@ -55,12 +55,75 @@
 
         document.getElementById('title').innerHTML = `Summarized Data Over ${parseInt(offset)+1} (Start From ${date})`
 
+        createTable(feat1, feat2, date, offset)
         createHistogramChart(feat1, feat2, date, offset);
         createLineChart(feat1, feat2, date, offset);
         createScatterChart(feat1, feat2, date, offset);
 
         // DEBUG
         console.log(feat1, feat2, date, offset);
+    }
+
+    async function createTable(type1,type2,date,offset) {
+        var resp = await fetch('http://localhost:3000/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+          {
+  feat1: basicStats(feature: "${type1}", date: "${date}", offset: ${offset}) {
+    avg
+    count
+    name
+    std
+  }
+  feat2: basicStats(feature: "${type2}", date: "${date}", offset: ${offset}) {
+    avg
+    count
+    name
+    std
+  }
+  corr: controllerGetCorrFeatFeat2(date: "${date}", offset: ${offset}, feature: "${type1}", feature2: "${type2}") {
+    corr
+    x
+    y
+  }
+}`
+        })
+      });
+      var json = await resp.json();
+      var table = json.data;
+      var feat1 = table.feat1;
+      var feat2 = table.feat2;
+
+        var values = [
+            ['avg', 'std', 'count', 'corr coef'],
+            [feat1.avg, feat1.std, feat1.count, table.corr.corr],
+            [feat2.avg, feat2.std, feat2.count],
+        ]
+
+        var data = [{
+        type: 'table',
+        header: {
+            values: [["<b>name</b>"], [`<b>${type1 == "count" ? "tweet" : type1}</b>`],
+                        [`<b>${type2 == "count" ? "tweet" : type2}</b>`]],
+            align: "center",
+            line: {width: 1, color: 'black'},
+            fill: {color: "grey"},
+            font: {family: "Arial", size: 12, color: "white"}
+        },
+        cells: {
+            values: values,
+            align: "center",
+            line: {color: "black", width: 1},
+            font: {family: "Arial", size: 11, color: ["black"]}
+        }
+        }]
+
+        Plotly.newPlot('desc', data);
     }
 
     async function createHistogramChart(type1,type2, date, offset) {
